@@ -1,0 +1,52 @@
+[project]
+name = "whosai"
+version = "0.1.0"
+description = "A social-deduction game where humans identify AI-controlled players."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "langchain-core>=1.4",
+    "langchain-deepseek>=1.1.0",
+    "langgraph>=1.0",
+    "langsmith>=0.9",
+    "python-dotenv>=1.2.2",
+    "pyyaml>=6.0",
+    "uvicorn[standard]>=0.34",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+whosai-simulate-ai = "whosai.ai.simulation:main"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28",
+    "mypy>=1.15",
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "ruff>=0.11",
+    "types-pyyaml>=6.0",
+]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/whosai"]

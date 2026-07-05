@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: whosai
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: >-
+      uv sync --frozen --no-dev &&
+      npm --prefix frontend ci &&
+      npm --prefix frontend run build
+    startCommand: >-
+      .venv/bin/uvicorn whosai.main:app
+      --app-dir src
+      --host 0.0.0.0
+      --port $PORT
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: DEEPSEEK_MODEL
+        value: deepseek-chat
+      - key: LANGSMITH_TRACING
+        value: "true"
+      - key: LANGSMITH_HIDE_INPUTS
+        value: "true"
+      - key: LANGSMITH_HIDE_OUTPUTS
+        value: "true"
+      - key: WHOSAI_E2E
+        value: "0"

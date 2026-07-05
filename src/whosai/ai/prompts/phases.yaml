@@ -1,0 +1,33 @@
+name: ai-player-phase-instructions
+version: 1
+phases:
+  discussion:
+    parameters:
+      player_id:
+        description: Anonymous seat label assigned to this AI.
+      turn_number:
+        description: Current concurrent discussion turn, starting at 1.
+      new_messages_since_last_turn:
+        description: Number of messages added since the previous discussion turn.
+    template: |-
+      Current phase: DISCUSSION.
+      This is discussion turn {turn_number}.
+      New messages since the previous turn: {new_messages_since_last_turn}.
+      Chat is open. Decide whether {player_id} should:
+      - use action "speak" with one public chat message in response; or
+      - use action "wait" with response set to null.
+      Waiting is appropriate when new messages show that the room is active without you.
+      If new_messages_since_last_turn is 0, the room is stalled: action "wait" is not allowed. Restart
+      discussion with a relevant question, suspicion, or observation.
+      target_player_id must be null in this phase.
+  voting:
+    parameters:
+      player_id:
+        description: Anonymous seat label assigned to this AI.
+      eligible_vote_targets:
+        description: Comma-separated anonymous player IDs that may receive this vote.
+    template: |-
+      Current phase: VOTING.
+      Chat is closed. {player_id} must cast one vote using action "vote".
+      Eligible vote targets: {eligible_vote_targets}
+      Set target_player_id to exactly one eligible player ID and response to null.
