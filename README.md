@@ -122,3 +122,12 @@ uv run whosai-simulate-ai
 The simulator invokes all four players concurrently for each discussion batch,
 continues until the transcript exceeds 20 messages, and then collects one vote
 from every player.
+
+Run the one-call live smoke test before deploying a provider or default-model change:
+
+```bash
+WHOSAI_RUN_LIVE_MODEL_TESTS=1 uv run pytest -m live_model tests/live
+```
+
+The live smoke test loads `DEEPSEEK_API_KEY` from `.env`, uses the default model configuration, and incurs one paid model call.
+Normal test runs exclude all tests marked `live_model`.

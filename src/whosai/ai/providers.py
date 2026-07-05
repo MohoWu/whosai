@@ -17,4 +17,5 @@ def build_deepseek_chat_model() -> ChatDeepSeek:
         temperature=0.7,
         timeout=60,
         max_retries=2,
+        extra_body={"thinking": {"type": "disabled"}},
     )

@@ -33,8 +33,11 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "-q"
+addopts = "-q -m 'not live_model'"
 testpaths = ["tests"]
+markers = [
+    "live_model: calls a paid model provider and must be explicitly enabled",
+]
 
 [tool.ruff]
 line-length = 100
