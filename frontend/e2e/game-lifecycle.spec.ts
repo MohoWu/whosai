@@ -94,6 +94,64 @@ test("three humans complete a two-round game against the AI", async ({
       });
     }
 
+    const mobilePage = pages[0];
+    await mobilePage.getByLabel("Transmit to channel").focus();
+    await mobilePage.setViewportSize({ width: 390, height: 500 });
+    await expect
+      .poll(() =>
+        mobilePage.evaluate(
+          () => document.querySelector<HTMLElement>(".composer")?.getBoundingClientRect().bottom,
+        ),
+      )
+      .toBeLessThanOrEqual(501);
+    await expect
+      .poll(() =>
+        mobilePage.evaluate(() => {
+          const transcript = document.querySelector<HTMLElement>(".transcript");
+          const messages = transcript?.querySelectorAll<HTMLElement>(".message");
+          const latestMessage = messages?.item((messages?.length ?? 0) - 1);
+          return (
+            latestMessage !== null &&
+            latestMessage !== undefined &&
+            transcript !== null &&
+            latestMessage.getBoundingClientRect().top <
+              transcript.getBoundingClientRect().bottom
+          );
+        }),
+      )
+      .toBe(true);
+    const typingLayout = await mobilePage.evaluate(() => {
+      const composer = document.querySelector<HTMLElement>(".composer");
+      const input = document.querySelector<HTMLInputElement>("#chat-message");
+      const transcript = document.querySelector<HTMLElement>(".transcript");
+      if (!composer || !input || !transcript) {
+        throw new Error("The mobile chat layout is incomplete.");
+      }
+      const messages = transcript.querySelectorAll<HTMLElement>(".message");
+      const latestMessage = messages.item(messages.length - 1);
+      if (!latestMessage) {
+        throw new Error("The mobile transcript has no messages.");
+      }
+      const latestMessageRect = latestMessage.getBoundingClientRect();
+      const transcriptRect = transcript.getBoundingClientRect();
+      return {
+        composerBottom: composer.getBoundingClientRect().bottom,
+        inputFontSize: Number.parseFloat(getComputedStyle(input).fontSize),
+        latestMessageBottom: latestMessageRect.bottom,
+        latestMessageTop: latestMessageRect.top,
+        transcriptBottom: transcriptRect.bottom,
+        transcriptHeight: transcriptRect.height,
+        transcriptTop: transcriptRect.top,
+        viewportHeight: window.innerHeight,
+      };
+    });
+    expect(typingLayout.inputFontSize).toBeGreaterThanOrEqual(16);
+    expect(typingLayout.composerBottom).toBeLessThanOrEqual(typingLayout.viewportHeight + 1);
+    expect(typingLayout.transcriptHeight).toBeGreaterThanOrEqual(120);
+    expect(typingLayout.latestMessageTop).toBeLessThan(typingLayout.transcriptBottom);
+    expect(typingLayout.latestMessageBottom).toBeGreaterThan(typingLayout.transcriptTop);
+    await mobilePage.setViewportSize({ width: 390, height: 844 });
+
     const matches = await Promise.all(pages.map(storedMatch));
     const humanTarget = matches[0].seat_id;
     const aiSeat = ["Player 1", "Player 2", "Player 3", "Player 4"].find(

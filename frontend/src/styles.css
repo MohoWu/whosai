@@ -1257,7 +1257,15 @@ input:focus-visible {
   }
 
   .game-shell {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: var(--game-viewport-height, 100dvh);
+    min-height: 0;
+    overflow: hidden;
     padding: 0;
+    transform: translateY(var(--game-viewport-offset-top, 0));
   }
 
   .game-header {
@@ -1323,7 +1331,9 @@ input:focus-visible {
 
   .game-layout {
     display: flex;
-    min-height: calc(100vh - 68px);
+    height: calc(var(--game-viewport-height, 100dvh) - 68px);
+    min-height: 0;
+    overflow: hidden;
     flex-direction: column;
     gap: 0;
     margin-top: 0;
@@ -1335,6 +1345,7 @@ input:focus-visible {
   }
 
   .roster-panel {
+    flex: 0 0 auto;
     order: 1;
     border-top: 0;
   }
@@ -1380,7 +1391,8 @@ input:focus-visible {
   }
 
   .channel-panel {
-    min-height: calc(100vh - 176px);
+    min-height: 0;
+    flex: 1 1 0;
     order: 2;
     border-bottom: 0;
   }
@@ -1390,7 +1402,7 @@ input:focus-visible {
   }
 
   .transcript {
-    min-height: 320px;
+    min-height: 0;
     padding: 18px 14px;
   }
 
@@ -1412,9 +1424,12 @@ input:focus-visible {
   }
 
   .composer {
-    position: sticky;
-    bottom: 0;
+    position: static;
     padding: 10px;
+  }
+
+  .composer input {
+    font-size: 1rem;
   }
 
   .composer label {

@@ -1,4 +1,11 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  type FormEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import type { Game, Match, RoundResult, Seat } from "./types";
 import { useGameSession } from "./useGameSession";
@@ -20,6 +27,44 @@ function useCountdown(deadline: string | null | undefined): string {
   }
   const remaining = Math.max(0, Math.ceil((new Date(deadline).getTime() - now) / 1000));
   return `${twoDigits(Math.floor(remaining / 60))}:${twoDigits(remaining % 60)}`;
+}
+
+interface GameViewport {
+  height: number;
+  offsetTop: number;
+}
+
+interface GameViewportProperties extends CSSProperties {
+  "--game-viewport-height": string;
+  "--game-viewport-offset-top": string;
+}
+
+function readGameViewport(): GameViewport {
+  const viewport = window.visualViewport;
+  return {
+    height: Math.round(viewport?.height ?? window.innerHeight),
+    offsetTop: Math.round(viewport?.offsetTop ?? 0),
+  };
+}
+
+function useGameViewport(): GameViewport {
+  const [viewport, setViewport] = useState(readGameViewport);
+
+  useEffect(() => {
+    const visualViewport = window.visualViewport;
+    const updateViewport = () => setViewport(readGameViewport());
+
+    window.addEventListener("resize", updateViewport);
+    visualViewport?.addEventListener("resize", updateViewport);
+    visualViewport?.addEventListener("scroll", updateViewport);
+    return () => {
+      window.removeEventListener("resize", updateViewport);
+      visualViewport?.removeEventListener("resize", updateViewport);
+      visualViewport?.removeEventListener("scroll", updateViewport);
+    };
+  }, []);
+
+  return viewport;
 }
 
 function Logo() {
@@ -185,18 +230,28 @@ function RoundReport({ result }: { result: RoundResult }) {
 function Transcript({
   game,
   playerSeatId,
+  viewportHeight,
 }: {
   game: Game;
   playerSeatId: string | null;
+  viewportHeight: number;
 }) {
-  const endRef = useRef<HTMLDivElement>(null);
+  const transcriptRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "nearest" });
-  }, [game.messages]);
+    const transcript = transcriptRef.current;
+    if (transcript) {
+      transcript.scrollTop = transcript.scrollHeight;
+    }
+  }, [game.messages, viewportHeight]);
 
   return (
-    <div className="transcript" aria-live="polite" aria-label="Discussion transcript">
+    <div
+      className="transcript"
+      ref={transcriptRef}
+      aria-live="polite"
+      aria-label="Discussion transcript"
+    >
       {game.messages.length === 0 ? (
         <div className="empty-transcript">
           <span aria-hidden="true">&gt;_</span>
@@ -221,7 +276,6 @@ function Transcript({
           );
         })
       )}
-      <div ref={endRef} />
     </div>
   );
 }
@@ -258,6 +312,7 @@ function Composer({
           placeholder="TYPE A MESSAGE..."
           disabled={disabled}
           autoComplete="off"
+          enterKeyHint="send"
         />
         <button
           type="submit"
@@ -377,13 +432,18 @@ function GameView({
   onVote: (target: string) => Promise<void>;
   votedRound: number | null;
 }) {
+  const viewport = useGameViewport();
   const ownSeat = game.seats.find((seat) => seat.id === match.seat_id);
   const latestResult = game.round_results.at(-1);
   const showRoundReport =
     latestResult !== undefined && latestResult.round_number === game.round_number - 1;
+  const viewportProperties: GameViewportProperties = {
+    "--game-viewport-height": `${viewport.height}px`,
+    "--game-viewport-offset-top": `${viewport.offsetTop}px`,
+  };
 
   return (
-    <main className="game-shell">
+    <main className="game-shell" style={viewportProperties}>
       <GameHeader game={game} onLeave={onLeave} />
       <div className="game-layout">
         <Roster game={game} playerSeatId={match.seat_id} />
@@ -397,7 +457,11 @@ function GameView({
           </div>
 
           {showRoundReport ? <RoundReport result={latestResult} /> : null}
-          <Transcript game={game} playerSeatId={match.seat_id} />
+          <Transcript
+            game={game}
+            playerSeatId={match.seat_id}
+            viewportHeight={viewport.height}
+          />
 
           {game.phase === "discussion" ? (
             ownSeat?.alive ? (
