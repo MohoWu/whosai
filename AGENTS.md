@@ -184,6 +184,29 @@ Use typed Python and TypeScript. Prefer domain names (`Game`, `Seat`, `Vote`,
 transitions, use structured logging with game/round IDs, and never log secrets,
 private role assignments during play, raw prompts, or unredacted personal data.
 
+## Commit conventions
+
+All commit messages must follow the [Conventional Commits 1.0.0 specification](https://www.conventionalcommits.org/en/v1.0.0/).
+
+Use this structure:
+
+```text
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+- Use `fix` for bug fixes that correlate with a [SemVer PATCH](https://semver.org/#summary).
+- Use `feat` for new features that correlate with a [SemVer MINOR](https://semver.org/#summary).
+- Mark breaking API changes with `!` immediately before the colon, or with a `BREAKING CHANGE: <description>` footer.
+  Breaking changes correlate with a [SemVer MAJOR](https://semver.org/#summary) and may use any commit type.
+- Other appropriate types include `build`, `chore`, `ci`, `docs`, `style`, `refactor`, `perf`, and `test`.
+  These types have no implicit SemVer effect unless they contain a breaking change.
+- Add an optional parenthesised scope when it provides useful context, for example `feat(parser): add ability to parse arrays`.
+- Write non-breaking footers as [Git trailers](https://git-scm.com/docs/git-interpret-trailers).
+
 ## Change discipline
 
 - Keep commits and pull requests focused on one vertical behavior.
