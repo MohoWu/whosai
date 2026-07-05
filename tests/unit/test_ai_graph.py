@@ -50,11 +50,21 @@ def test_system_prompt_assigns_identity_and_explains_the_game() -> None:
     assert 'action is "vote"' in prompt
 
 
+def test_system_prompt_supports_multilingual_casual_chat() -> None:
+    prompt = build_system_prompt("Player 4")
+
+    assert "一号" in prompt
+    assert "一号玩家" in prompt
+    assert "Player 1" in prompt
+    assert "same language" in prompt
+    assert "perfect punctuation" in prompt
+
+
 def test_system_prompt_definition_declares_player_parameter() -> None:
     definition = load_system_prompt_definition()
 
     assert definition.name == "ai-player-system"
-    assert definition.version == 1
+    assert definition.version == 2
     assert set(definition.parameters) == {"player_id"}
     assert "{player_id}" in definition.template
 
