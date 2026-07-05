@@ -19,7 +19,7 @@ services:
       - key: DEEPSEEK_API_KEY
         sync: false
       - key: DEEPSEEK_MODEL
-        value: deepseek-chat
+        value: deepseek-v4-flash
       - key: LANGSMITH_TRACING
         value: "true"
       - key: LANGSMITH_HIDE_INPUTS
