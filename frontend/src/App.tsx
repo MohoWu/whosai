@@ -7,8 +7,13 @@ import {
   useState,
 } from "react";
 
+import {
+  LanguageProvider,
+  LanguageSwitch,
+} from "./i18n";
 import type { Game, Match, RoundResult, Seat } from "./types";
-import { useGameSession } from "./useGameSession";
+import { useLanguage } from "./useLanguage";
+import { type SessionError, useGameSession } from "./useGameSession";
 
 function twoDigits(value: number): string {
   return value.toString().padStart(2, "0");
@@ -68,11 +73,31 @@ function useGameViewport(): GameViewport {
 }
 
 function Logo() {
+  const { t } = useLanguage();
+
   return (
-    <div className="logo" aria-label="Who's AI?">
+    <div className="logo" aria-label={t("meta.title")}>
       <span>WHO&apos;S</span>
       <strong>AI?</strong>
     </div>
+  );
+}
+
+function ErrorMessage({
+  className = "",
+  error,
+}: {
+  className?: string;
+  error: SessionError | null;
+}) {
+  const { t } = useLanguage();
+  if (!error) {
+    return null;
+  }
+  return (
+    <p className={`error-message ${className}`.trim()}>
+      {t(`error.${error}`)}
+    </p>
   );
 }
 
@@ -82,29 +107,31 @@ function Lobby({
   match,
   onJoin,
 }: {
-  error: string | null;
+  error: SessionError | null;
   joining: boolean;
   match: Match | null;
   onJoin: () => Promise<void>;
 }) {
+  const { t } = useLanguage();
   const queued = match?.status === "waiting";
 
   return (
     <main className="landing-shell">
+      <LanguageSwitch className="language-switch-overlay" />
       <div className="landing-grid" aria-hidden="true" />
       <section className="lobby-card" aria-labelledby="game-title">
         <div className="corner-code" aria-hidden="true">
           SYS.2049 / NODE 7
         </div>
-        <p className="eyebrow">ANONYMOUS SOCIAL DEDUCTION</p>
+        <p className="eyebrow">{t("lobby.eyebrow")}</p>
         <h1 id="game-title">
           WHO&apos;S
           <span>AI?</span>
         </h1>
         <p className="premise">
-          Four voices enter the channel.
+          {t("lobby.premiseLine1")}
           <br />
-          One of them was never human.
+          {t("lobby.premiseLine2")}
         </p>
 
         {queued ? (
@@ -115,8 +142,8 @@ function Lobby({
               <i />
             </div>
             <div>
-              <strong>LINK REQUEST SENT</strong>
-              <span>Waiting for a three-human cell...</span>
+              <strong>{t("lobby.linkSent")}</strong>
+              <span>{t("lobby.waiting")}</span>
             </div>
           </div>
         ) : (
@@ -126,20 +153,20 @@ function Lobby({
             disabled={joining}
             onClick={() => void onJoin()}
           >
-            <span>{joining ? "TRANSMITTING..." : "ENTER THE NETWORK"}</span>
+            <span>{joining ? t("lobby.transmitting") : t("lobby.enter")}</span>
             <b aria-hidden="true">↗</b>
           </button>
         )}
 
-        {error ? <p className="error-message">{error}</p> : null}
+        <ErrorMessage error={error} />
 
-        <div className="lobby-meta" aria-label="Game details">
-          <span>03 HUMANS</span>
-          <span>01 UNKNOWN</span>
-          <span>05:00 ROUNDS</span>
+        <div className="lobby-meta" aria-label={t("lobby.details")}>
+          <span>{t("lobby.humans")}</span>
+          <span>{t("lobby.unknown")}</span>
+          <span>{t("lobby.rounds")}</span>
         </div>
       </section>
-      <p className="landing-footnote">TRUST IS A VULNERABILITY</p>
+      <p className="landing-footnote">{t("lobby.footnote")}</p>
     </main>
   );
 }
@@ -151,6 +178,7 @@ function Roster({
   game: Game;
   playerSeatId: string | null;
 }) {
+  const { seatName, t } = useLanguage();
   const livingCount = game.seats.filter((seat) => seat.alive).length;
 
   return (
@@ -158,7 +186,7 @@ function Roster({
       <div className="panel-heading">
         <div>
           <span className="section-index">01</span>
-          <h2 id="roster-heading">ACTIVE NODES</h2>
+          <h2 id="roster-heading">{t("roster.heading")}</h2>
         </div>
         <span className="count-chip">
           {livingCount}/{game.seats.length}
@@ -178,49 +206,63 @@ function Roster({
                 {twoDigits(index + 1)}
               </span>
               <span className="seat-copy">
-                <strong data-testid={isPlayer ? "player-seat" : undefined}>{seat.id}</strong>
+                <strong data-testid={isPlayer ? "player-seat" : undefined}>
+                  {seatName(seat.id)}
+                </strong>
                 <small>
-                  {seat.alive ? "SIGNAL ACTIVE" : "DISCONNECTED"}
-                  {isPlayer ? " / YOU" : ""}
+                  {seat.alive ? t("roster.active") : t("roster.disconnected")}
+                  {isPlayer ? ` / ${t("roster.you")}` : ""}
                 </small>
               </span>
-              <span className="life-dot" aria-label={seat.alive ? "alive" : "eliminated"} />
+              <span
+                className="life-dot"
+                aria-label={
+                  seat.alive ? t("roster.alive") : t("roster.eliminated")
+                }
+              />
             </li>
           );
         })}
       </ul>
       <div className="roster-footer">
-        <span>IDENTITIES</span>
-        <strong>{game.phase === "finished" ? "DECRYPTED" : "ENCRYPTED"}</strong>
+        <span>{t("roster.identities")}</span>
+        <strong>
+          {game.phase === "finished" ? t("roster.decrypted") : t("roster.encrypted")}
+        </strong>
       </div>
     </aside>
   );
 }
 
 function RoundReport({ result }: { result: RoundResult }) {
+  const { seatName, t } = useLanguage();
+
   return (
     <section className="round-report" aria-labelledby={`round-${result.round_number}-result`}>
-      <div className="report-kicker">ROUND {twoDigits(result.round_number)} / VOTE RESULT</div>
+      <div className="report-kicker">
+        {t("round.result", { round: twoDigits(result.round_number) })}
+      </div>
       <h3 id={`round-${result.round_number}-result`}>
         {result.eliminated_id ? (
           <>
-            <span>{result.eliminated_id}</span> was eliminated
+            <span>{seatName(result.eliminated_id)}</span>
+            {t("round.wasEliminated")}
           </>
         ) : (
-          "No consensus. No elimination."
+          t("round.noConsensus")
         )}
       </h3>
-      <div className="vote-trace" aria-label="Voting record">
+      <div className="vote-trace" aria-label={t("round.votingRecord")}>
         {result.votes.length ? (
           result.votes.map((vote) => (
             <div key={vote.voter_id}>
-              <span>{vote.voter_id}</span>
+              <span>{seatName(vote.voter_id)}</span>
               <b aria-hidden="true">→</b>
-              <strong>{vote.target_id}</strong>
+              <strong>{seatName(vote.target_id)}</strong>
             </div>
           ))
         ) : (
-          <p>No votes were recorded.</p>
+          <p>{t("round.noVotes")}</p>
         )}
       </div>
     </section>
@@ -236,6 +278,7 @@ function Transcript({
   playerSeatId: string | null;
   viewportHeight: number;
 }) {
+  const { language, seatName, t } = useLanguage();
   const transcriptRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -250,12 +293,12 @@ function Transcript({
       className="transcript"
       ref={transcriptRef}
       aria-live="polite"
-      aria-label="Discussion transcript"
+      aria-label={t("transcript.label")}
     >
       {game.messages.length === 0 ? (
         <div className="empty-transcript">
           <span aria-hidden="true">&gt;_</span>
-          <p>Channel open. Say something human.</p>
+          <p>{t("transcript.empty")}</p>
         </div>
       ) : (
         game.messages.map((message) => {
@@ -263,9 +306,9 @@ function Transcript({
           return (
             <article className={`message ${ownMessage ? "own-message" : ""}`} key={message.id}>
               <div className="message-meta">
-                <strong>{message.seat_id}</strong>
+                <strong>{seatName(message.seat_id)}</strong>
                 <time dateTime={message.sent_at}>
-                  {new Date(message.sent_at).toLocaleTimeString([], {
+                  {new Date(message.sent_at).toLocaleTimeString(language, {
                     hour: "2-digit",
                     minute: "2-digit",
                   })}
@@ -287,6 +330,7 @@ function Composer({
   disabled: boolean;
   onSend: (message: string) => Promise<void>;
 }) {
+  const { t } = useLanguage();
   const [message, setMessage] = useState("");
 
   const submit = async (event: FormEvent) => {
@@ -301,7 +345,7 @@ function Composer({
 
   return (
     <form className="composer" onSubmit={(event) => void submit(event)}>
-      <label htmlFor="chat-message">Transmit to channel</label>
+      <label htmlFor="chat-message">{t("composer.label")}</label>
       <div>
         <span aria-hidden="true">&gt;</span>
         <input
@@ -309,7 +353,7 @@ function Composer({
           maxLength={500}
           value={message}
           onChange={(event) => setMessage(event.target.value)}
-          placeholder="TYPE A MESSAGE..."
+          placeholder={t("composer.placeholder")}
           disabled={disabled}
           autoComplete="off"
           enterKeyHint="send"
@@ -317,9 +361,9 @@ function Composer({
         <button
           type="submit"
           disabled={disabled || !message.trim()}
-          aria-label="Send message"
+          aria-label={t("composer.sendLabel")}
         >
-          SEND
+          {t("composer.send")}
           <b aria-hidden="true">↗</b>
         </button>
       </div>
@@ -340,11 +384,13 @@ function VotingControls({
   onVote: (target: string) => Promise<void>;
   voted: boolean;
 }) {
+  const { seatName, t } = useLanguage();
+
   if (!ownSeat?.alive) {
     return (
       <div className="spectator-notice" role="status">
-        <strong>OBSERVER MODE</strong>
-        <span>Your signal was cut. You can watch, but cannot vote.</span>
+        <strong>{t("observer.title")}</strong>
+        <span>{t("observer.vote")}</span>
       </div>
     );
   }
@@ -352,8 +398,8 @@ function VotingControls({
   if (voted) {
     return (
       <div className="vote-locked" role="status">
-        <strong>VOTE ENCRYPTED + LOCKED</strong>
-        <span>Waiting for remaining nodes or the server deadline.</span>
+        <strong>{t("vote.locked")}</strong>
+        <span>{t("vote.waiting")}</span>
       </div>
     );
   }
@@ -361,8 +407,8 @@ function VotingControls({
   return (
     <div className="voting-controls">
       <div className="voting-instruction">
-        <strong>SELECT A SIGNAL TO TERMINATE</strong>
-        <span>Your first vote is final.</span>
+        <strong>{t("vote.instruction")}</strong>
+        <span>{t("vote.final")}</span>
       </div>
       <div className="vote-grid">
         {game.seats
@@ -373,13 +419,13 @@ function VotingControls({
               key={seat.id}
               disabled={actionPending}
               onClick={() => void onVote(seat.id)}
-              aria-label={`Vote for ${seat.id}`}
+              aria-label={t("vote.for", { seat: seatName(seat.id) })}
             >
               <span>
-                {seat.id}
-                {seat.id === ownSeat.id ? " / YOU" : ""}
+                {seatName(seat.id)}
+                {seat.id === ownSeat.id ? ` / ${t("roster.you")}` : ""}
               </span>
-              <b>VOTE</b>
+              <b>{t("vote.action")}</b>
             </button>
           ))}
       </div>
@@ -388,26 +434,37 @@ function VotingControls({
 }
 
 function GameHeader({ game, onLeave }: { game: Game; onLeave: () => void }) {
+  const { language, t } = useLanguage();
   const countdown = useCountdown(game.phase_deadline);
-  const phaseName = game.phase === "voting" ? "VOTING WINDOW" : "DISCUSSION LIVE";
+  const phaseName =
+    game.phase === "voting" ? t("header.voting") : t("header.discussion");
 
   return (
     <header className="game-header">
       <Logo />
       <div className="round-status">
-        <span>ROUND</span>
-        <strong data-testid="round-number">{twoDigits(game.round_number)}</strong>
+        <span>{t("header.round")}</span>
+        <strong
+          data-prefix={language === "zh-CN" ? "回" : "R"}
+          data-testid="round-number"
+        >
+          {twoDigits(game.round_number)}
+        </strong>
       </div>
       <div className={`phase-status phase-${game.phase}`} role="status" aria-live="polite">
         <i aria-hidden="true" />
         <span>{phaseName}</span>
       </div>
-      <div className="countdown" aria-label={`${countdown} remaining`}>
-        <span>TIME REMAINING</span>
+      <div
+        className="countdown"
+        aria-label={t("header.remainingLabel", { time: countdown })}
+      >
+        <span>{t("header.timeRemaining")}</span>
         <strong>{countdown}</strong>
       </div>
+      <LanguageSwitch />
       <button className="leave-button" type="button" onClick={onLeave}>
-        EXIT
+        {t("header.exit")}
       </button>
     </header>
   );
@@ -424,7 +481,7 @@ function GameView({
   votedRound,
 }: {
   actionPending: boolean;
-  error: string | null;
+  error: SessionError | null;
   game: Game;
   match: Match;
   onLeave: () => void;
@@ -432,6 +489,7 @@ function GameView({
   onVote: (target: string) => Promise<void>;
   votedRound: number | null;
 }) {
+  const { seatName, t } = useLanguage();
   const viewport = useGameViewport();
   const ownSeat = game.seats.find((seat) => seat.id === match.seat_id);
   const latestResult = game.round_results.at(-1);
@@ -451,9 +509,9 @@ function GameView({
           <div className="panel-heading channel-heading">
             <div>
               <span className="section-index">02</span>
-              <h2 id="channel-heading">OPEN CHANNEL</h2>
+              <h2 id="channel-heading">{t("channel.heading")}</h2>
             </div>
-            <span className="encrypted-chip">● ENCRYPTED</span>
+            <span className="encrypted-chip">{t("channel.encrypted")}</span>
           </div>
 
           {showRoundReport ? <RoundReport result={latestResult} /> : null}
@@ -468,8 +526,8 @@ function GameView({
               <Composer disabled={actionPending} onSend={onSend} />
             ) : (
               <div className="spectator-notice" role="status">
-                <strong>OBSERVER MODE</strong>
-                <span>Your signal was cut. You can watch, but cannot chat.</span>
+                <strong>{t("observer.title")}</strong>
+                <span>{t("observer.chat")}</span>
               </div>
             )
           ) : (
@@ -481,25 +539,25 @@ function GameView({
               voted={votedRound === game.round_number}
             />
           )}
-          {error ? <p className="error-message game-error">{error}</p> : null}
+          <ErrorMessage className="game-error" error={error} />
         </section>
         <aside className="intel-panel panel" aria-labelledby="intel-heading">
           <div className="panel-heading">
             <div>
               <span className="section-index">03</span>
-              <h2 id="intel-heading">MISSION INTEL</h2>
+              <h2 id="intel-heading">{t("intel.heading")}</h2>
             </div>
           </div>
           <div className="intel-block">
-            <span>OBJECTIVE</span>
-            <p>Identify and eliminate the synthetic signal before it reaches parity.</p>
+            <span>{t("intel.objective")}</span>
+            <p>{t("intel.objectiveCopy")}</p>
           </div>
           <div className="intel-block">
-            <span>CURRENT PHASE</span>
+            <span>{t("intel.currentPhase")}</span>
             <p>
               {game.phase === "discussion"
-                ? "Interrogate the channel. Every hesitation is data."
-                : "Commit one final vote before the channel closes."}
+                ? t("intel.discussion")
+                : t("intel.voting")}
             </p>
           </div>
           <div className="signal-graphic" aria-hidden="true">
@@ -510,8 +568,8 @@ function GameView({
             <i />
           </div>
           <div className="your-id">
-            <span>YOUR CALLSIGN</span>
-            <strong>{match.seat_id}</strong>
+            <span>{t("intel.callsign")}</span>
+            <strong>{match.seat_id ? seatName(match.seat_id) : ""}</strong>
           </div>
         </aside>
       </div>
@@ -526,6 +584,7 @@ function FinalResults({
   game: Game;
   onLeave: () => void;
 }) {
+  const { language, seatName, t } = useLanguage();
   const humanWin = game.winner === "humans";
   const aiSeats = useMemo(
     () => game.seats.filter((seat) => seat.role === "ai"),
@@ -537,27 +596,28 @@ function FinalResults({
       <div className={`result-glow ${humanWin ? "human-glow" : "ai-glow"}`} />
       <header>
         <Logo />
-        <span>SESSION TERMINATED / IDENTITIES DECRYPTED</span>
+        <div className="results-header-meta">
+          <span>{t("results.terminated")}</span>
+          <LanguageSwitch />
+        </div>
       </header>
       <section className="result-hero" aria-labelledby="result-title">
-        <p>FINAL VERDICT</p>
+        <p>{t("results.verdict")}</p>
         <h1 id="result-title" data-testid="winner">
           {humanWin ? (
             <>
-              HUMANITY
-              <span>PREVAILS</span>
+              {t("results.humanity")}
+              <span>{t("results.prevails")}</span>
             </>
           ) : (
             <>
-              THE SYSTEM
-              <span>WINS</span>
+              {t("results.system")}
+              <span>{t("results.wins")}</span>
             </>
           )}
         </h1>
         <p className="result-summary">
-          {humanWin
-            ? "The synthetic signal was found and disconnected."
-            : "The synthetic signal reached parity. Trust collapsed."}
+          {humanWin ? t("results.humanSummary") : t("results.aiSummary")}
         </p>
       </section>
 
@@ -565,7 +625,7 @@ function FinalResults({
         <div className="panel-heading">
           <div>
             <span className="section-index">01</span>
-            <h2 id="identity-heading">IDENTITY REVEAL</h2>
+            <h2 id="identity-heading">{t("results.identityReveal")}</h2>
           </div>
         </div>
         <div className="identity-grid">
@@ -577,9 +637,13 @@ function FinalResults({
               key={seat.id}
             >
               <span>{twoDigits(index + 1)}</span>
-              <strong>{seat.id}</strong>
-              <b>{seat.role === "ai" ? "SYNTHETIC" : "HUMAN"}</b>
-              <small>{seat.alive ? "ACTIVE AT END" : "ELIMINATED"}</small>
+              <strong>{seatName(seat.id)}</strong>
+              <b>
+                {seat.role === "ai" ? t("results.synthetic") : t("results.human")}
+              </b>
+              <small>
+                {seat.alive ? t("results.activeAtEnd") : t("results.eliminated")}
+              </small>
             </article>
           ))}
         </div>
@@ -589,7 +653,7 @@ function FinalResults({
         <div className="panel-heading">
           <div>
             <span className="section-index">02</span>
-            <h2 id="history-heading">VOTE ARCHIVE</h2>
+            <h2 id="history-heading">{t("results.voteArchive")}</h2>
           </div>
         </div>
         {game.round_results.map((result) => (
@@ -599,18 +663,24 @@ function FinalResults({
 
       <footer className="results-footer">
         <span>
-          SYNTHETIC SIGNAL: <strong>{aiSeats.map((seat) => seat.id).join(", ")}</strong>
+          {t("results.syntheticSignal")}:{" "}
+          <strong>
+            {aiSeats
+              .map((seat) => seatName(seat.id))
+              .join(language === "zh-CN" ? "、" : ", ")}
+          </strong>
         </span>
         <button className="primary-button" type="button" onClick={onLeave}>
-          RETURN TO NETWORK
+          {t("results.return")}
         </button>
       </footer>
     </main>
   );
 }
 
-export function App() {
+function AppContent() {
   const session = useGameSession();
+  const { t } = useLanguage();
 
   if (!session.match || session.match.status === "waiting") {
     return (
@@ -626,10 +696,20 @@ export function App() {
   if (!session.game) {
     return (
       <main className="loading-shell" role="status">
+        <LanguageSwitch className="language-switch-overlay" />
         <Logo />
         <div className="loading-line" aria-hidden="true" />
-        <strong>ESTABLISHING SECURE CHANNEL...</strong>
-        {session.error ? <p className="error-message">{session.error}</p> : null}
+        <strong>{t("loading.channel")}</strong>
+        <ErrorMessage error={session.error} />
+        {session.error ? (
+          <button
+            className="primary-button loading-return"
+            type="button"
+            onClick={session.leave}
+          >
+            {t("results.return")}
+          </button>
+        ) : null}
       </main>
     );
   }
@@ -649,5 +729,13 @@ export function App() {
       onVote={session.vote}
       votedRound={session.votedRound}
     />
+  );
+}
+
+export function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }

@@ -12,6 +12,8 @@ import type { Game, Match } from "./types";
 const SESSION_KEY = "whosai.session";
 const POLL_INTERVAL_MS = 1000;
 
+export type SessionError = "join" | "send" | "update" | "vote";
+
 function readSession(): Match | null {
   try {
     const value = localStorage.getItem(SESSION_KEY);
@@ -27,7 +29,7 @@ export function useGameSession() {
   const [game, setGame] = useState<Game | null>(null);
   const [joining, setJoining] = useState(false);
   const [actionPending, setActionPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<SessionError | null>(null);
   const [votedRound, setVotedRound] = useState<number | null>(null);
 
   const setMatch = useCallback((nextMatch: Match) => {
@@ -66,11 +68,9 @@ export function useGameSession() {
             setError(null);
           }
         }
-      } catch (pollError) {
+      } catch {
         if (active) {
-          setError(
-            pollError instanceof Error ? pollError.message : "Unable to update the game.",
-          );
+          setError("update");
         }
       } finally {
         requestRunning = false;
@@ -90,8 +90,8 @@ export function useGameSession() {
     setError(null);
     try {
       setMatch(await joinMatchmaking());
-    } catch (joinError) {
-      setError(joinError instanceof Error ? joinError.message : "Unable to join.");
+    } catch {
+      setError("join");
     } finally {
       setJoining(false);
     }
@@ -106,7 +106,7 @@ export function useGameSession() {
     try {
       setGame(await sendChat(match, content));
     } catch (chatError) {
-      setError(chatError instanceof Error ? chatError.message : "Unable to send.");
+      setError("send");
       throw chatError;
     } finally {
       setActionPending(false);
@@ -123,7 +123,7 @@ export function useGameSession() {
       setGame(await castVoteRequest(match, targetId));
       setVotedRound(game.round_number);
     } catch (voteError) {
-      setError(voteError instanceof Error ? voteError.message : "Unable to vote.");
+      setError("vote");
       throw voteError;
     } finally {
       setActionPending(false);
