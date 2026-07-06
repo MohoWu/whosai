@@ -28,3 +28,5 @@ services:
         value: "true"
       - key: WHOSAI_E2E
         value: "0"
+      - key: LANGSMITH_PROJECT
+        value: whosai-dev
