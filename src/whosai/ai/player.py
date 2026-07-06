@@ -34,6 +34,7 @@ class LangGraphAIPlayer:
                 for message in request.chat_history
             ],
             "eligible_vote_targets": list(request.eligible_vote_targets),
+            "round_brief": request.round_brief,
         }
         result = await self._graph.ainvoke(state)
         decision = GraphDecision.model_validate(result["decision"])

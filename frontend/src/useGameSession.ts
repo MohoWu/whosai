@@ -4,6 +4,7 @@ import {
   castVote as castVoteRequest,
   getGame,
   getMatch,
+  isExpiredSessionError,
   joinMatchmaking,
   sendChat,
 } from "./api";
@@ -12,7 +13,12 @@ import type { Game, Match } from "./types";
 const SESSION_KEY = "whosai.session";
 const POLL_INTERVAL_MS = 1000;
 
-export type SessionError = "join" | "send" | "update" | "vote";
+export type SessionError =
+  | "join"
+  | "send"
+  | "sessionExpired"
+  | "update"
+  | "vote";
 
 function readSession(): Match | null {
   try {
@@ -68,10 +74,21 @@ export function useGameSession() {
             setError(null);
           }
         }
-      } catch {
-        if (active) {
-          setError("update");
+      } catch (updateError) {
+        if (!active) {
+          return;
         }
+        if (isExpiredSessionError(updateError)) {
+          active = false;
+          window.clearInterval(interval);
+          localStorage.removeItem(SESSION_KEY);
+          setMatchState(null);
+          setGame(null);
+          setVotedRound(null);
+          setError("sessionExpired");
+          return;
+        }
+        setError("update");
       } finally {
         requestRunning = false;
       }

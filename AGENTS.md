@@ -23,6 +23,7 @@ The prototype needs:
 6. A final result that reveals roles.
 7. AI-controlled players orchestrated through LangGraph.
 8. Automated lifecycle smoke tests using bot-controlled browser players.
+9. A bilingual keyword discussion task where one living seat receives only the category.
 
 Do not add accounts, profiles, rankings, friends, payments, spectators, private
 messages, or long-term chat history unless a requirement explicitly calls for
@@ -47,6 +48,9 @@ them.
   provider metadata, and model reasoning are private.
 - Make random role assignment and seat ordering injectable and seedable in
   tests.
+- At the start of every discussion round, select one bilingual category and keyword, then independently select one living seat to receive only the category.
+- The uninformed seat may be human or AI, and this temporary round condition never changes the elimination objective or win conditions.
+- Treat each player's category and keyword as private state that must not appear in another player's snapshot.
 
 The following are still product decisions. Do not silently invent permanent
 rules for them: vote ties, abstentions, disconnected players, reconnect grace
@@ -99,6 +103,8 @@ allowed action. It does not own the canonical game state or advance game phases.
 
 - Give an AI seat only the public information available to a human in that seat,
   plus its own private role/instructions.
+- Give the AI seat the same player-scoped category and optional keyword that its seat would receive if controlled by a human.
+- The AI should participate in the keyword discussion to resemble a human player, not optimize for identifying or succeeding as the uninformed seat.
 - Expose narrow actions such as `send_chat(message)` and `cast_vote(seat_id)`.
   Validate every proposed action through the same application commands used by
   humans.

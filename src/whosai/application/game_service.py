@@ -21,13 +21,14 @@ from whosai.domain.game import (
     PublicGameState,
     Role,
     advance_game,
+    assign_round_secret,
+    cast_vote,
     create_four_seat_game,
+    player_round_brief,
     post_chat,
     public_game_state,
 )
-from whosai.domain.game import (
-    cast_vote as apply_vote,
-)
+from whosai.domain.keywords import CANDIDATE_KEYWORD_CATEGORIES
 
 
 class ResourceNotFoundError(LookupError):
@@ -96,12 +97,17 @@ class GameService:
 
     async def get_game(self, *, game_id: str, player_token: str) -> PublicGameState:
         async with self._lock:
-            await self._authorize_player(game_id=game_id, player_token=player_token)
+            ticket = await self._authorize_player(
+                game_id=game_id,
+                player_token=player_token,
+            )
+            if ticket.seat_id is None:
+                raise RuntimeError("A matched ticket must have a seat ID.")
             game = await self._repository.get_game(game_id)
             if game is None:
                 raise ResourceNotFoundError(f"Unknown game: {game_id}.")
             advanced = await self._advance_to_now(game)
-            return public_game_state(advanced)
+            return public_game_state(advanced, viewer_seat_id=ticket.seat_id)
 
     async def send_chat(
         self,
@@ -123,7 +129,7 @@ class GameService:
                 content=content,
                 idempotency_key=idempotency_key,
             )
-            return public_game_state(updated)
+            return public_game_state(updated, viewer_seat_id=seat_id)
 
     async def cast_vote(
         self,
@@ -145,7 +151,7 @@ class GameService:
                 target_id=target_id,
                 idempotency_key=idempotency_key,
             )
-            return public_game_state(updated)
+            return public_game_state(updated, viewer_seat_id=seat_id)
 
     async def advance_phase_for_testing(
         self,
@@ -167,7 +173,7 @@ class GameService:
                 command="test-advance",
                 idempotency_key=idempotency_key,
             ):
-                return public_game_state(game)
+                return public_game_state(game, viewer_seat_id=seat_id)
             if game.phase_deadline is None:
                 raise ValueError("The current phase does not have a deadline.")
 
@@ -180,7 +186,7 @@ class GameService:
                 command="test-advance",
                 idempotency_key=idempotency_key,
             )
-            return public_game_state(advanced)
+            return public_game_state(advanced, viewer_seat_id=seat_id)
 
     async def _start_game(self, tickets: tuple[MatchTicket, ...]) -> None:
         game_id = self._ids.new_id()
@@ -191,6 +197,7 @@ class GameService:
             ai_seat_id=ai_seat_id,
             now=self._clock.now(),
         )
+        game = self._assign_round_secret(game)
         await self._repository.save_game(game)
         self._synchronize_new_game(game)
         for ticket, seat_id in zip(tickets, human_seat_ids, strict=True):
@@ -256,6 +263,8 @@ class GameService:
             advanced = advance_game(current, now=now)
             if advanced == current:
                 break
+            if current.phase is Phase.VOTING and advanced.phase is Phase.DISCUSSION:
+                advanced = self._assign_round_secret(advanced)
             transitions.append((current, advanced))
             current = advanced
         if current != game:
@@ -263,6 +272,18 @@ class GameService:
             for previous, advanced in transitions:
                 self._synchronize_phase_transition(previous, advanced)
         return current
+
+    def _assign_round_secret(self, game: Game) -> Game:
+        category = self._random_source.shuffled(CANDIDATE_KEYWORD_CATEGORIES)[0]
+        keyword = self._random_source.shuffled(category.keywords)[0]
+        living_seat_ids = tuple(seat.id for seat in game.seats if seat.alive)
+        uninformed_seat_id = self._random_source.shuffled(living_seat_ids)[0]
+        return assign_round_secret(
+            game,
+            category=category.name,
+            keyword=keyword,
+            uninformed_seat_id=uninformed_seat_id,
+        )
 
     def _synchronize_new_game(self, game: Game) -> None:
         if self._phase_scheduler is not None:
@@ -401,7 +422,7 @@ class GameService:
             idempotency_key=idempotency_key,
         ):
             return game
-        updated = apply_vote(
+        updated = cast_vote(
             game,
             voter_id=seat_id,
             target_id=target_id,
@@ -445,6 +466,10 @@ class GameService:
                 seat.id for seat in game.seats if seat.alive and seat.id != trigger.seat_id
             )
 
+        round_brief = player_round_brief(game, seat_id=trigger.seat_id)
+        if round_brief is None:
+            return None
+
         return AIPlayerRequest(
             game_id=trigger.game_id,
             seat_id=trigger.seat_id,
@@ -455,6 +480,7 @@ class GameService:
             direct_mention=trigger.direct_mention,
             chat_history=chat_history,
             eligible_vote_targets=eligible_vote_targets,
+            round_brief=round_brief,
         )
 
     @staticmethod

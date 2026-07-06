@@ -35,6 +35,16 @@ export interface RoundResult {
   votes: Vote[];
 }
 
+export interface LocalizedText {
+  en: string;
+  zh_cn: string;
+}
+
+export interface RoundBrief {
+  category: LocalizedText;
+  keyword: LocalizedText | null;
+}
+
 export interface Game {
   id: string;
   seats: Seat[];
@@ -44,4 +54,5 @@ export interface Game {
   winner: Winner | null;
   messages: ChatMessage[];
   round_results: RoundResult[];
+  round_brief: RoundBrief | null;
 }

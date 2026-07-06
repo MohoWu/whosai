@@ -18,7 +18,13 @@ from whosai.ai.prompt import (
 )
 from whosai.application.models import AIPlayerRequest
 from whosai.domain.game import ChatMessage as DomainChatMessage
-from whosai.domain.game import Phase
+from whosai.domain.game import Phase, PlayerRoundBrief
+from whosai.domain.keywords import LocalizedText
+
+ROUND_BRIEF = PlayerRoundBrief(
+    category=LocalizedText(en="Public places", zh_cn="公共场所"),
+    keyword=LocalizedText(en="airport", zh_cn="机场"),
+)
 
 
 class StubDecisionModel:
@@ -60,11 +66,43 @@ def test_system_prompt_supports_multilingual_casual_chat() -> None:
     assert "perfect punctuation" in prompt
 
 
+def test_graph_receives_two_level_chameleon_identity_contract() -> None:
+    model = StubDecisionModel(
+        {
+            "action": "wait",
+            "response": None,
+            "target_player_id": None,
+            "decision_summary": "Waiting is the most natural action.",
+        }
+    )
+    graph = build_ai_player_graph(model)
+
+    graph.invoke(
+        {
+            "game_id": "game-prompt-contract",
+            "player_id": "Player 4",
+            "round_number": 1,
+            "turn_number": 1,
+            "new_messages_since_last_turn": 0,
+            "phase": "discussion",
+            "chat_history": [],
+            "eligible_vote_targets": [],
+            "round_brief": ROUND_BRIEF,
+        }
+    )
+
+    system_prompt = str(model.messages[0].content)
+    assert "Level 1 - Play the Chameleon game" in system_prompt
+    assert "Level 2 - Impersonate a human player" in system_prompt
+    assert "Your AI role and the uninformed seat are separate" in system_prompt
+    assert "Deception is part of this game" in system_prompt
+
+
 def test_system_prompt_definition_declares_player_parameter() -> None:
     definition = load_system_prompt_definition()
 
     assert definition.name == "ai-player-system"
-    assert definition.version == 2
+    assert definition.version == 4
     assert set(definition.parameters) == {"player_id"}
     assert "{player_id}" in definition.template
 
@@ -82,6 +120,7 @@ def test_model_messages_include_every_current_round_message_in_order() -> None:
             ChatMessage(player_id="Player 2", content="Player 3, what do you think?"),
         ],
         eligible_vote_targets=[],
+        round_brief=ROUND_BRIEF,
     )
 
     assert isinstance(messages[0], SystemMessage)
@@ -110,6 +149,7 @@ def test_voting_message_ends_with_phase_and_eligible_targets() -> None:
         phase="voting",
         chat_history=[ChatMessage(player_id="Player 1", content="Time to vote.")],
         eligible_vote_targets=["Player 1", "Player 2", "Player 4"],
+        round_brief=ROUND_BRIEF,
     )
 
     prompt = str(messages[1].content)
@@ -149,6 +189,7 @@ def test_graph_returns_a_speak_decision_and_adds_trace_metadata() -> None:
             "phase": "discussion",
             "chat_history": [ChatMessage(player_id="Player 2", content="Player 3, any thoughts?")],
             "eligible_vote_targets": [],
+            "round_brief": ROUND_BRIEF,
         }
     )
 
@@ -182,6 +223,7 @@ def test_graph_can_choose_to_wait() -> None:
             "phase": "discussion",
             "chat_history": [ChatMessage(player_id="Player 2", content="I agree with Player 4.")],
             "eligible_vote_targets": [],
+            "round_brief": ROUND_BRIEF,
         }
     )
 
@@ -212,6 +254,7 @@ def test_graph_can_vote_for_an_eligible_player() -> None:
                 ChatMessage(player_id="Player 2", content="Player 4 contradicted themselves.")
             ],
             "eligible_vote_targets": ["Player 2", "Player 3", "Player 4"],
+            "round_brief": ROUND_BRIEF,
         }
     )
 
@@ -289,6 +332,7 @@ def test_langgraph_player_adapts_the_application_request_and_vote_decision() -> 
                     ),
                 ),
                 eligible_vote_targets=("Player 1", "Player 2", "Player 3"),
+                round_brief=ROUND_BRIEF,
             )
         )
 

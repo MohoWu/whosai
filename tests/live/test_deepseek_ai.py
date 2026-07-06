@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 from whosai.ai.graph import build_ai_player_graph, with_decision_schema
 from whosai.ai.models import AIPlayerDecision, ChatMessage
 from whosai.ai.providers import build_deepseek_chat_model
+from whosai.domain.game import PlayerRoundBrief
+from whosai.domain.keywords import LocalizedText
 
 
 @pytest.mark.live_model
@@ -38,6 +40,10 @@ def test_default_deepseek_model_completes_one_ai_turn(
                 )
             ],
             "eligible_vote_targets": [],
+            "round_brief": PlayerRoundBrief(
+                category=LocalizedText(en="Public places", zh_cn="公共场所"),
+                keyword=LocalizedText(en="airport", zh_cn="机场"),
+            ),
         }
     )
 

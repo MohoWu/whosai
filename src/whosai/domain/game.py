@@ -3,6 +3,8 @@ from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 
+from whosai.domain.keywords import LocalizedText
+
 
 class Phase(StrEnum):
     LOBBY = "lobby"
@@ -63,6 +65,19 @@ class RoundResult:
 
 
 @dataclass(frozen=True, slots=True)
+class RoundSecret:
+    category: LocalizedText
+    keyword: LocalizedText
+    uninformed_seat_id: str
+
+
+@dataclass(frozen=True, slots=True)
+class PlayerRoundBrief:
+    category: LocalizedText
+    keyword: LocalizedText | None
+
+
+@dataclass(frozen=True, slots=True)
 class Game:
     id: str
     seats: tuple[Seat, ...]
@@ -74,6 +89,7 @@ class Game:
     messages: tuple[ChatMessage, ...] = ()
     votes: tuple[Vote, ...] = ()
     round_results: tuple[RoundResult, ...] = ()
+    round_secret: RoundSecret | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,6 +109,7 @@ class PublicGameState:
     winner: Winner | None
     messages: tuple[ChatMessage, ...]
     round_results: tuple[RoundResult, ...]
+    round_brief: PlayerRoundBrief | None
 
 
 def create_four_seat_game(
@@ -126,7 +143,52 @@ def create_four_seat_game(
     )
 
 
-def public_game_state(game: Game) -> PublicGameState:
+def assign_round_secret(
+    game: Game,
+    *,
+    category: LocalizedText,
+    keyword: LocalizedText,
+    uninformed_seat_id: str,
+) -> Game:
+    if game.phase is not Phase.DISCUSSION:
+        raise ValueError("Round secrets can only be assigned during discussion.")
+    uninformed_seat = next(
+        (seat for seat in game.seats if seat.id == uninformed_seat_id),
+        None,
+    )
+    if uninformed_seat is None:
+        raise ValueError(f"Unknown uninformed seat: {uninformed_seat_id}.")
+    if not uninformed_seat.alive:
+        raise ValueError("The uninformed seat must be alive.")
+    return replace(
+        game,
+        round_secret=RoundSecret(
+            category=category,
+            keyword=keyword,
+            uninformed_seat_id=uninformed_seat_id,
+        ),
+    )
+
+
+def player_round_brief(game: Game, *, seat_id: str) -> PlayerRoundBrief | None:
+    seat = next((candidate for candidate in game.seats if candidate.id == seat_id), None)
+    if seat is None:
+        raise ValueError(f"Unknown seat: {seat_id}.")
+    if not seat.alive or game.round_secret is None:
+        return None
+    return PlayerRoundBrief(
+        category=game.round_secret.category,
+        keyword=(
+            None if game.round_secret.uninformed_seat_id == seat_id else game.round_secret.keyword
+        ),
+    )
+
+
+def public_game_state(
+    game: Game,
+    *,
+    viewer_seat_id: str | None = None,
+) -> PublicGameState:
     reveal_roles = game.phase is Phase.FINISHED
     return PublicGameState(
         id=game.id,
@@ -144,6 +206,9 @@ def public_game_state(game: Game) -> PublicGameState:
         winner=game.winner,
         messages=game.messages,
         round_results=game.round_results,
+        round_brief=(
+            player_round_brief(game, seat_id=viewer_seat_id) if viewer_seat_id is not None else None
+        ),
     )
 
 
@@ -268,4 +333,5 @@ def _resolve_voting(game: Game, *, now: datetime) -> Game:
         messages=(),
         votes=(),
         round_results=round_results,
+        round_secret=None,
     )

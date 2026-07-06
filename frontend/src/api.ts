@@ -4,6 +4,23 @@ interface ApiErrorBody {
   detail?: string;
 }
 
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+export function isExpiredSessionError(error: unknown): boolean {
+  return (
+    error instanceof ApiError &&
+    (error.status === 403 || error.status === 404)
+  );
+}
+
 function idempotencyKey(prefix: string): string {
   const id =
     typeof crypto.randomUUID === "function"
@@ -15,7 +32,10 @@ function idempotencyKey(prefix: string): string {
 async function readJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const body = (await response.json().catch(() => ({}))) as ApiErrorBody;
-    throw new Error(body.detail ?? `Request failed with status ${response.status}.`);
+    throw new ApiError(
+      body.detail ?? `Request failed with status ${response.status}.`,
+      response.status,
+    );
   }
   return (await response.json()) as T;
 }

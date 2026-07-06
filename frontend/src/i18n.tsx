@@ -44,6 +44,14 @@ const english = {
   "round.noConsensus": "No consensus. No elimination.",
   "round.votingRecord": "Voting record",
   "round.noVotes": "No votes were recorded.",
+  "brief.heading": "ROUND BRIEF",
+  "brief.category": "CATEGORY",
+  "brief.keyword": "SECRET KEYWORD",
+  "brief.noKeyword": "NO KEYWORD",
+  "brief.informedInstruction":
+    "Discuss it without saying it directly. Your vote is still for who you think is AI.",
+  "brief.uninformedInstruction":
+    "You only know the category. Blend in naturally. Your vote is still for who you think is AI.",
   "transcript.label": "Discussion transcript",
   "transcript.empty": "Channel open. Say something human.",
   "composer.label": "Transmit to channel",
@@ -95,6 +103,7 @@ const english = {
   "error.update": "Unable to update the game.",
   "error.join": "Unable to join.",
   "error.send": "Unable to send.",
+  "error.sessionExpired": "Your saved game expired. Join again.",
   "error.vote": "Unable to vote.",
 } as const;
 
@@ -131,6 +140,12 @@ const chinese: Record<TranslationKey, string> = {
   "round.noConsensus": "未达成共识，无人被淘汰。",
   "round.votingRecord": "投票记录",
   "round.noVotes": "未记录任何投票。",
+  "brief.heading": "回合密令",
+  "brief.category": "类别",
+  "brief.keyword": "秘密词",
+  "brief.noKeyword": "未收到关键词",
+  "brief.informedInstruction": "讨论这个词，但不要直接说出它。最终仍要投票选出你认为是 AI 的玩家。",
+  "brief.uninformedInstruction": "你只知道类别。设法自然地融入讨论。最终仍要投票选出你认为是 AI 的玩家。",
   "transcript.label": "讨论记录",
   "transcript.empty": "频道已开启。说点像人类的话。",
   "composer.label": "向频道发送消息",
@@ -181,6 +196,7 @@ const chinese: Record<TranslationKey, string> = {
   "error.update": "无法更新游戏。",
   "error.join": "无法加入。",
   "error.send": "无法发送。",
+  "error.sessionExpired": "保存的游戏会话已失效，请重新加入。",
   "error.vote": "无法投票。",
 };
 

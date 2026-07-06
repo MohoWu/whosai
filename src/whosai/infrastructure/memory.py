@@ -1,10 +1,13 @@
 import random
 from collections.abc import Sequence
 from datetime import UTC, datetime
+from typing import TypeVar
 from uuid import uuid4
 
 from whosai.application.models import MatchStatus, MatchTicket
 from whosai.domain.game import Game
+
+T = TypeVar("T")
 
 
 class InMemoryGameRepository:
@@ -99,7 +102,7 @@ class SeededRandomSource:
     def __init__(self, *, seed: int | None = None) -> None:
         self._random = random.Random(seed)
 
-    def shuffled(self, values: Sequence[str]) -> tuple[str, ...]:
+    def shuffled(self, values: Sequence[T]) -> tuple[T, ...]:
         return tuple(self._random.sample(tuple(values), k=len(values)))
 
 

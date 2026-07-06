@@ -9,6 +9,7 @@ from langgraph.graph.state import CompiledStateGraph
 
 from whosai.ai.models import AIPlayerDecision, ChatMessage, GamePhase
 from whosai.ai.prompt import build_model_messages
+from whosai.domain.game import PlayerRoundBrief
 
 
 class AIPlayerState(TypedDict):
@@ -23,6 +24,7 @@ class AIPlayerState(TypedDict):
     phase: GamePhase
     chat_history: list[ChatMessage]
     eligible_vote_targets: list[str]
+    round_brief: PlayerRoundBrief
     decision: NotRequired[AIPlayerDecision]
 
 
@@ -60,6 +62,7 @@ def build_ai_player_graph(
             phase=state["phase"],
             chat_history=state["chat_history"],
             eligible_vote_targets=state["eligible_vote_targets"],
+            round_brief=state["round_brief"],
         )
         trace_config = merge_configs(
             config,

@@ -45,6 +45,7 @@ const discussionGame: Game = {
   winner: null,
   messages: [],
   round_results: [],
+  round_brief: null,
 };
 
 function mockGameResponse(game: Game) {
@@ -127,6 +128,34 @@ describe("App", () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     await new Promise((resolve) => window.setTimeout(resolve, 1050));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  });
+
+  it("clears a persisted match when the backend rejects its game token", async () => {
+    localStorage.setItem("whosai.session", JSON.stringify(matchedSession));
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            detail: "The player token does not belong to this game.",
+          }),
+          {
+            status: 403,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    expect(
+      await screen.findByRole("button", { name: "ENTER THE NETWORK" }),
+    ).toBeVisible();
+    expect(screen.getByText("Your saved game expired. Join again.")).toBeVisible();
+    expect(localStorage.getItem("whosai.session")).toBeNull();
+    await new Promise((resolve) => window.setTimeout(resolve, 1050));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("switches the lobby to Chinese and persists the selection", () => {

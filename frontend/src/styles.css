@@ -684,6 +684,81 @@ input:focus-visible {
   flex-direction: column;
 }
 
+.round-brief {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: minmax(150px, 0.85fr) minmax(230px, 1.15fr);
+  gap: 18px;
+  margin: 14px 18px 0;
+  padding: 14px 16px;
+  border: 1px solid rgb(198 255 55 / 24%);
+  background:
+    linear-gradient(90deg, rgb(198 255 55 / 7%), transparent),
+    rgb(198 255 55 / 2%);
+}
+
+.round-brief.is-uninformed {
+  border-color: rgb(255 61 154 / 32%);
+  background:
+    linear-gradient(90deg, rgb(255 61 154 / 8%), transparent),
+    rgb(255 61 154 / 2%);
+}
+
+.round-brief-copy > span {
+  color: var(--acid);
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+
+.round-brief.is-uninformed .round-brief-copy > span {
+  color: var(--pink);
+}
+
+.round-brief-copy p {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 0.54rem;
+  line-height: 1.5;
+}
+
+.round-brief-values {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.round-brief-values div {
+  min-width: 0;
+  padding: 8px 10px;
+  border-left: 1px solid rgb(77 255 218 / 24%);
+  background: rgb(0 0 0 / 14%);
+}
+
+.round-brief-values dt {
+  color: var(--dim);
+  font-size: 0.46rem;
+  letter-spacing: 0.1em;
+}
+
+.round-brief-values dd {
+  overflow-wrap: anywhere;
+  margin: 6px 0 0;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+}
+
+.round-brief-values div:last-child dd {
+  color: var(--acid);
+}
+
+.round-brief.is-uninformed .round-brief-values div:last-child dd {
+  color: var(--pink);
+}
+
 .transcript {
   flex: 1;
   overflow-y: auto;
@@ -1465,6 +1540,31 @@ input:focus-visible {
 
   .channel-heading {
     display: none;
+  }
+
+  .round-brief {
+    grid-template-columns: minmax(110px, 0.75fr) minmax(0, 1.25fr);
+    gap: 8px;
+    margin: 8px 10px 0;
+    padding: 9px 10px;
+  }
+
+  .round-brief-copy p {
+    margin-top: 5px;
+    font-size: 0.47rem;
+    line-height: 1.35;
+  }
+
+  .round-brief-values {
+    gap: 5px;
+  }
+
+  .round-brief-values div {
+    padding: 6px 7px;
+  }
+
+  .round-brief-values dd {
+    font-size: 0.8rem;
   }
 
   .transcript {

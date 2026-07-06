@@ -17,9 +17,15 @@ from whosai.ai.graph import (
 )
 from whosai.ai.models import AIPlayerDecision, ChatMessage, GamePhase
 from whosai.ai.providers import build_deepseek_chat_model
+from whosai.domain.game import PlayerRoundBrief
+from whosai.domain.keywords import LocalizedText
 
 DEFAULT_PLAYERS = ("Player 1", "Player 2", "Player 3", "Player 4")
 SEED_MESSAGE = ChatMessage(player_id="Player 1", content="how's everyone doing?")
+SIMULATION_ROUND_BRIEF = PlayerRoundBrief(
+    category=LocalizedText(en="Public places", zh_cn="公共场所"),
+    keyword=LocalizedText(en="airport", zh_cn="机场"),
+)
 
 
 class SimulatedTurn(BaseModel):
@@ -62,6 +68,7 @@ async def _invoke_player(
         "phase": phase,
         "chat_history": chat_history,
         "eligible_vote_targets": eligible_vote_targets,
+        "round_brief": SIMULATION_ROUND_BRIEF,
     }
     config: RunnableConfig = {
         "tags": ["ai-game-simulation", f"game:{game_id}", f"phase:{phase}"],

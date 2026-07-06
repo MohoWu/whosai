@@ -79,6 +79,20 @@ class RoundResultResponse(BaseModel):
     votes: tuple[VoteResponse, ...]
 
 
+class LocalizedTextResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    en: str
+    zh_cn: str
+
+
+class RoundBriefResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    category: LocalizedTextResponse
+    keyword: LocalizedTextResponse | None
+
+
 class GameResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -90,6 +104,7 @@ class GameResponse(BaseModel):
     winner: Winner | None
     messages: tuple[ChatMessageResponse, ...]
     round_results: tuple[RoundResultResponse, ...]
+    round_brief: RoundBriefResponse | None
 
 
 class SendChatRequest(BaseModel):

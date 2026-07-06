@@ -1,9 +1,11 @@
 from collections.abc import Awaitable, Callable, Sequence
 from datetime import datetime
-from typing import Protocol
+from typing import Protocol, TypeVar
 
 from whosai.application.models import AIPlayerDecision, AIPlayerRequest, MatchTicket
 from whosai.domain.game import Game
+
+T = TypeVar("T")
 
 
 class Clock(Protocol):
@@ -15,7 +17,7 @@ class IdGenerator(Protocol):
 
 
 class RandomSource(Protocol):
-    def shuffled(self, values: Sequence[str]) -> tuple[str, ...]: ...
+    def shuffled(self, values: Sequence[T]) -> tuple[T, ...]: ...
 
 
 class ScheduledJob(Protocol):

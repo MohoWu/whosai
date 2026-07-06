@@ -11,7 +11,7 @@ import {
   LanguageProvider,
   LanguageSwitch,
 } from "./i18n";
-import type { Game, Match, RoundResult, Seat } from "./types";
+import type { Game, LocalizedText, Match, RoundResult, Seat } from "./types";
 import { useLanguage } from "./useLanguage";
 import { type SessionError, useGameSession } from "./useGameSession";
 
@@ -269,6 +269,47 @@ function RoundReport({ result }: { result: RoundResult }) {
   );
 }
 
+function RoundBrief({ game }: { game: Game }) {
+  const { language, t } = useLanguage();
+  if (!game.round_brief) {
+    return null;
+  }
+
+  const localize = (text: LocalizedText) =>
+    language === "zh-CN" ? text.zh_cn : text.en;
+  const informed = game.round_brief.keyword !== null;
+
+  return (
+    <section
+      className={`round-brief ${informed ? "is-informed" : "is-uninformed"}`}
+      aria-labelledby="round-brief-heading"
+    >
+      <div className="round-brief-copy">
+        <span id="round-brief-heading">{t("brief.heading")}</span>
+        <p>
+          {informed
+            ? t("brief.informedInstruction")
+            : t("brief.uninformedInstruction")}
+        </p>
+      </div>
+      <dl className="round-brief-values">
+        <div>
+          <dt>{t("brief.category")}</dt>
+          <dd>{localize(game.round_brief.category)}</dd>
+        </div>
+        <div>
+          <dt>{t("brief.keyword")}</dt>
+          <dd>
+            {game.round_brief.keyword
+              ? localize(game.round_brief.keyword)
+              : t("brief.noKeyword")}
+          </dd>
+        </div>
+      </dl>
+    </section>
+  );
+}
+
 function Transcript({
   game,
   playerSeatId,
@@ -514,6 +555,7 @@ function GameView({
             <span className="encrypted-chip">{t("channel.encrypted")}</span>
           </div>
 
+          <RoundBrief game={game} />
           {showRoundReport ? <RoundReport result={latestResult} /> : null}
           <Transcript
             game={game}

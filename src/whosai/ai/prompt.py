@@ -6,6 +6,7 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import BaseModel, ConfigDict
 
 from whosai.ai.models import ChatMessage, GamePhase
+from whosai.domain.game import PlayerRoundBrief
 
 
 class PromptParameter(BaseModel):
@@ -101,6 +102,7 @@ def build_model_messages(
     phase: GamePhase,
     chat_history: list[ChatMessage],
     eligible_vote_targets: list[str],
+    round_brief: PlayerRoundBrief,
 ) -> list[BaseMessage]:
     """Create the model input for one decision without retaining earlier rounds."""
     transcript = render_chat_history(chat_history)
@@ -111,12 +113,23 @@ def build_model_messages(
         new_messages_since_last_turn=new_messages_since_last_turn,
         eligible_vote_targets=eligible_vote_targets,
     )
+    keyword = (
+        f"{round_brief.keyword.en} / {round_brief.keyword.zh_cn}"
+        if round_brief.keyword is not None
+        else "(No keyword was provided. You are the uninformed player this round.)"
+    )
     return [
         SystemMessage(content=build_system_prompt(player_id)),
         HumanMessage(
             content=f"""Current discussion round: {round_number}
 Current turn: {turn_number}
 New messages since previous turn: {new_messages_since_last_turn}
+
+Private round brief for {player_id}:
+<round_brief>
+Category: {round_brief.category.en} / {round_brief.category.zh_cn}
+Secret keyword: {keyword}
+</round_brief>
 
 Current-round public chat, oldest message first:
 <chat_history>

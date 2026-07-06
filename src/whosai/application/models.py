@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Literal
 
-from whosai.domain.game import ChatMessage, Phase
+from whosai.domain.game import ChatMessage, Phase, PlayerRoundBrief
 
 
 class MatchStatus(StrEnum):
@@ -43,6 +43,7 @@ class AIPlayerRequest:
     direct_mention: bool
     chat_history: tuple[ChatMessage, ...]
     eligible_vote_targets: tuple[str, ...]
+    round_brief: PlayerRoundBrief
 
 
 @dataclass(frozen=True, slots=True)
