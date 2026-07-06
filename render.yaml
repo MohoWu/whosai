@@ -23,9 +23,9 @@ services:
       - key: LANGSMITH_TRACING
         value: "true"
       - key: LANGSMITH_HIDE_INPUTS
-        value: "true"
+        value: "false"
       - key: LANGSMITH_HIDE_OUTPUTS
-        value: "true"
+        value: "false"
       - key: WHOSAI_E2E
         value: "0"
       - key: LANGSMITH_PROJECT
