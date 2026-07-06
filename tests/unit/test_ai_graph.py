@@ -63,7 +63,13 @@ def test_system_prompt_supports_multilingual_casual_chat() -> None:
     assert "一号玩家" in prompt
     assert "Player 1" in prompt
     assert "same language" in prompt
-    assert "perfect punctuation" in prompt
+    assert "concise and straight to the point" in prompt
+    assert "at most 15 words" in prompt
+    assert "Even when asked to explain" in prompt
+    assert "casual, colloquial wording" in prompt
+    assert "Grammar does not need to be correct" in prompt
+    assert "Do not sound formal" in prompt
+    assert "Do not restate the question" in prompt
 
 
 def test_graph_receives_two_level_chameleon_identity_contract() -> None:
@@ -102,7 +108,7 @@ def test_system_prompt_definition_declares_player_parameter() -> None:
     definition = load_system_prompt_definition()
 
     assert definition.name == "ai-player-system"
-    assert definition.version == 4
+    assert definition.version == 5
     assert set(definition.parameters) == {"player_id"}
     assert "{player_id}" in definition.template
 

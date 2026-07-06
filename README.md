@@ -123,6 +123,17 @@ The simulator invokes all four players concurrently for each discussion batch,
 continues until the transcript exceeds 20 messages, and then collects one vote
 from every player.
 
+To test the production prompt conversationally without starting a game, run:
+
+```bash
+uv run whosai-chat-ai
+```
+
+Each line is added to a current-round transcript as `Player 1` and triggers one decision by `Player 4`.
+The command uses the same graph, system prompt, structured decision schema, and DeepSeek provider as the game.
+Use `--help` to change the player labels, category, keyword, or uninformed status.
+Each message makes a paid provider call.
+
 Run the one-call live smoke test before deploying a provider or default-model change:
 
 ```bash

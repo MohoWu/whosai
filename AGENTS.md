@@ -105,6 +105,8 @@ allowed action. It does not own the canonical game state or advance game phases.
   plus its own private role/instructions.
 - Give the AI seat the same player-scoped category and optional keyword that its seat would receive if controlled by a human.
 - The AI should participate in the keyword discussion to resemble a human player, not optimize for identifying or succeeding as the uninformed seat.
+- Keep AI public chat concise, direct, and colloquial.
+  Sentence fragments and imperfect grammar are acceptable when they make a message shorter without making it unclear.
 - Expose narrow actions such as `send_chat(message)` and `cast_vote(seat_id)`.
   Validate every proposed action through the same application commands used by
   humans.

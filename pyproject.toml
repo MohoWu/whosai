@@ -20,6 +20,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.scripts]
+whosai-chat-ai = "whosai.ai.chat:main"
 whosai-simulate-ai = "whosai.ai.simulation:main"
 
 [dependency-groups]
